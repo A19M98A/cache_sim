@@ -17,4 +17,4 @@ class StatsFile:
     
     @classmethod
     def printStates(cls):
-        print(f"Number of Hit:{cls.numberOfHit}, Number of Miss:{cls.numberOfMiss}, Hit rate:{round(cls.numberOfHit/cls.numberOfTotal, 2)}")
+        print(f"Number of Hit:{cls.numberOfHit}, Number of Miss:{cls.numberOfMiss}, Hit rate:{round((cls.numberOfHit/cls.numberOfTotal) * 100, 2)}")

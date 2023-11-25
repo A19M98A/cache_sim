@@ -5,8 +5,11 @@ from StatFile import StatsFile
 
 current_cycle = 0
 
+dedBlockTime = 0
+
 class Block:
     def __init__(self):
+        self.valid = 0
         self.tag = 0
         self.data = 0
         self.touchTime = 0
@@ -17,14 +20,16 @@ class Block:
     def write(self, tag, data):
         self.tag = tag
         self.data = data
+        self.valid = 1
         self.touch()
 
 class CacheSet:
     numberOfSet = 0
     replacementPolicy = RP.getRP("LRU")
 
-    def __init__(self, numberOfWays):
+    def __init__(self, numberOfWays, setRowID):
         self.blocks = []
+        self.setRowID = setRowID
         for i in range(numberOfWays):
             self.blocks.append(Block())
     
@@ -38,6 +43,10 @@ class CacheSet:
     
     def insert(self, tag):
         victim = self.replacementPolicy.getVictim(self.blocks)
+        if victim.valid:
+            global dedBlockTime
+            if current_cycle > self.numberOfSet * Cache.MAX_WAY: # for the time of warm up cache
+                dedBlockTime += current_cycle - max(victim.touchTime, self.numberOfSet * Cache.MAX_WAY)
         victim.write(tag, 0)
     
     def printState(self):
@@ -59,8 +68,9 @@ class Cache:
         CacheSet.replacementPolicy = RP.getRP(replacementPolicy)
         self.tagShiftSize = int(math.log(blkSize, 2) + math.log(CacheSet.numberOfSet, 2))
         self.setShiftSize = int(math.log(blkSize, 2))
+        self.MAX_WAY = numberOfWays
         for i in range(CacheSet.numberOfSet):
-            self.tags.append(CacheSet(numberOfWays))
+            self.tags.append(CacheSet(numberOfWays, i))
         
         print(f"Cache created by {CacheSet.numberOfSet} sets.")
         print(f"tag shift:{self.tagShiftSize}, set shift:{self.setShiftSize}")
@@ -77,4 +87,6 @@ class Cache:
             StatsFile.onMiss()
     
     def printFinallyState(self):
+        global dedBlockTime
+        print(f"avg of ded block:{round(dedBlockTime/(current_cycle - 1 - (CacheSet.numberOfSet * Cache.MAX_WAY)), 2)} ({round((dedBlockTime/(current_cycle - 1- (CacheSet.numberOfSet * Cache.MAX_WAY)))/(CacheSet.numberOfSet * self.MAX_WAY)*100, 2)}%)")
         StatsFile.printStates()
