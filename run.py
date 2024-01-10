@@ -7,6 +7,7 @@ parser.add_argument("-c", "--cacheSize", help="set the cache size")
 parser.add_argument("-b", "--blockSize", help="set the block size")
 parser.add_argument("-a", "--associativity", help="set associativity ")
 parser.add_argument("-r", "--replacementPolicy", help="set the replacement policy")
+parser.add_argument("-p", "--PrefetcherMethod", help="set the Prefetcher Method", default="no_PF")
 parser.add_argument("-s", "--showProcessBar", help="set y for show process bar")
 parser.add_argument("-w", "--workload", help="set the workload")
 class text_colors:
@@ -36,15 +37,17 @@ if __name__ == "__main__":
         cache_block_size = int(args.blockSize)
         cache_associativity = int(args.associativity)
         cache_replacement_policy = args.replacementPolicy
+        cache_prefetcher_method = args.PrefetcherMethod
         workload = args.workload
     else:
         cache_size = int(float(input("Cache Size (KB):")) * 1024)
         cache_block_size = int(input("Cache block Size (B):"))
         cache_associativity = int(input("Cache associativity:"))
         cache_replacement_policy = input("Replacement policy ([LRU], NMRU, Random):")
+        cache_prefetcher_method = input("Prefetcher Method ([no_PF], next_line, stride)")
         workload = input("workload:")
     
-    cache = Cache(cache_size, cache_block_size, cache_associativity, cache_replacement_policy)
+    Cache(cache_size, cache_block_size, cache_associativity, cache_replacement_policy, cache_prefetcher_method)
 
     total = 0
 
@@ -59,7 +62,8 @@ if __name__ == "__main__":
     line = f.readline()
     while line:
         addr = int(line.split(' ')[1], 16)
-        cache.access(addr)
+        PCIn = int(line.split(' ')[0], 16)
+        Cache.access(addr, 0, PCIn)
         line = f.readline()
         if args.showProcessBar == 'y':
             percent = int((index*50)/total)
@@ -75,4 +79,4 @@ if __name__ == "__main__":
                 old_percent = percent
         index += 1
     print()
-    cache.printFinallyState()
+    Cache.printFinallyState()
